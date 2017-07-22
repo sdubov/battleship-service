@@ -18,24 +18,52 @@ public class GameService {
         return new GameResponse(GameStatus.STARTED);
     }
 
+    // Restart after one player win a game
     public static GameResponse restartGame() {
         _game.restart();
         return new GameResponse(GameStatus.STARTED);
     }
 
+    // Join an existing game
+    public static GameResponse joinGame(String playerName) {
+
+        if (_game.getGameStatus() == GameStatus.IN_PROGRESS) {
+            // TODO: All available player are joined.
+            // TODO: throw an exception
+            return new GameResponse(GameStatus.BOOKED);
+        }
+
+        Player player = new Player(playerName);
+        _game.addPlayer(player);
+
+        GameResponse response = new GameResponse(_game.getGameStatus());
+        response.setActivePlayer(player);
+
+        return response;
+    }
+
     // Make a shoot
-    public static ShootResponse makeShoot(int x, int y) {
+    public static ShootResponse makeShoot(long playerId, int x, int y) {
 
         ShootResponse response = new ShootResponse();
+
+        if (_game.getGameStatus() == GameStatus.FINISHED) {
+            // TODO: Replace with broadcasting
+            response.setShootStatus(ShootStatus.LOOSE);
+            return response;
+        }
 
         Player activePlayer = _game.getActivePlayer();
         Player opponent = _game.getOpponent();
 
+        if (activePlayer.getId() != playerId) {
+            response.setGameStatus(GameStatus.WAITING_FOR_SHOOT);
+            return response;
+        }
+
         // Check if the cell is already processed
         if (activePlayer.getField().getStatus(x, y) != CellStatus.CLOSED) {
             // TODO: Update to one common status (?)
-            ShootStatus status = activePlayer.getField().getStatus(x, y) == CellStatus.MISS ? ShootStatus.MISS : ShootStatus.HIT;
-            response.setStatus(status);
             return response;
         }
 
@@ -76,16 +104,20 @@ public class GameService {
         // Current player win the game
         if (status == ShootStatus.WIN) {
             activePlayer.win();
-            // TODO: Restart the game
+            // TODO: Restart the game only once (replace with broadcasting)
+            _game.setGameStatus(GameStatus.FINISHED);
         }
 
         // Update the cell
         CellStatus cellStatus = (status == ShootStatus.HIT || status == ShootStatus.KILL) ? CellStatus.HIT : CellStatus.MISS;
         activePlayer.getField().setStatus(x, y, cellStatus);
 
-        // TODO: Switch player
+        // Check if we need to switch a player
+        if (status == ShootStatus.MISS) {
+            _game.switchPlayer();
+        }
 
-        response.setStatus(status);
+        response.setShootStatus(status);
         return response;
     }
 }

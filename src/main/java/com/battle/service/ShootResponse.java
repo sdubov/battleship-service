@@ -1,23 +1,33 @@
 package com.battle.service;
 
 import com.battle.model.ShipType;
+import com.battle.service.enums.GameStatus;
 import com.battle.service.enums.ShootStatus;
 
 public class ShootResponse {
 
-    private ShootStatus _status;
+    private ShootStatus _shootStatus;
+    private GameStatus _gameStatus;
     private ShipType _shipType;
     private Integer _shipHits;
 
     public ShootResponse() {
     }
 
-    public ShootStatus getStatus() {
-        return _status;
+    public ShootStatus getShootStatus() {
+        return _shootStatus;
     }
 
-    public void setStatus(ShootStatus status) {
-        _status = status;
+    public void setShootStatus(ShootStatus status) {
+        _shootStatus = status;
+    }
+
+    public GameStatus getGameStatus() {
+        return _gameStatus;
+    }
+
+    public void setGameStatus(GameStatus status) {
+        _gameStatus = status;
     }
 
     public ShipType getShipType() {

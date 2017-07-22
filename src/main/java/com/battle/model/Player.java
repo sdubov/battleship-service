@@ -2,13 +2,32 @@ package com.battle.model;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.UUID;
 
 public class Player {
-    private int _score;
+
+    private static final Long serialVersionUID = 1L;
+
+    private final Long _id;
+
+    // Player name
+    private final String _name;
+
+    // Player score
+    private Integer _score;
+
+    // Player shoots
     private Field _field;
+
+    // Check if user can make a shoot
+    private Boolean _canMakeShoot;
+
+    // Player ships array that should be hit by opponent
     private ArrayList<Ship> _ships;
 
-    public Player() {
+    public Player(String name) {
+        _id = UUID.randomUUID().getLeastSignificantBits() / 1000;
+        _name = name;
         _score = 0;
         _field = new Field();
 //        _ships = randomShipsGeneration(
@@ -21,7 +40,11 @@ public class Player {
         _ships = fakeShipsGeneration();
     }
 
-    public int getScore() {
+    public Long getId() { return _id; }
+
+    public String getName() { return _name; }
+
+    public Integer getScore() {
         return _score;
     }
 
@@ -37,6 +60,20 @@ public class Player {
         return _ships;
     }
 
+    public void setShips(ArrayList<Ship> ships) {
+        _ships = ships;
+    }
+
+    public Boolean getCanMakeShoot() {
+        return _canMakeShoot;
+    }
+
+    public void setCanMakeShoot(Boolean canMakeShoot) {
+        _canMakeShoot = canMakeShoot;
+    }
+
+
+
     public void win() {
         _score++;
     }
@@ -44,6 +81,8 @@ public class Player {
     public void recreateShips() {
         _ships = fakeShipsGeneration();
     }
+
+
 
     // TODO: Fake ship generator (both players will have same ship coordinates)
     private ArrayList<Ship> fakeShipsGeneration() {
