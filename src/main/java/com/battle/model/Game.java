@@ -28,8 +28,6 @@ public class Game {
         _status = GameStatus.IN_PROGRESS;
     }
 
-
-
     public GameStatus getGameStatus() {
         return _status;
     }
@@ -42,27 +40,33 @@ public class Game {
         return _activePlayer;
     }
 
+    public Player getPlayer1() {
+        return _player1;
+    }
 
+    public Player getPlayer2() {
+        return _player2;
+    }
 
+    // Restart the game: clean player's shoots field and regenerate players' ships
     public void restart() {
+        _status = GameStatus.IN_PROGRESS;
         _player1.recreateShips();
         _player1.setField(new Field());
         _player2.recreateShips();
         _player2.setField(new Field());
     }
 
+    // Switch a player to his opponent
     public void switchPlayer() {
         if (_activePlayer == _player1) {
-            _player1.setCanMakeShoot(false);
-            _player2.setCanMakeShoot(true);
             _activePlayer = _player2;
         } else {
-            _player1.setCanMakeShoot(true);
-            _player2.setCanMakeShoot(false);
             _activePlayer = _player1;
         }
     }
 
+    // Return current active player's opponent
     public Player getOpponent() {
         if (_activePlayer == _player1) {
             return _player2;

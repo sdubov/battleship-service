@@ -6,21 +6,14 @@ import java.util.UUID;
 
 public class Player {
 
-    private static final Long serialVersionUID = 1L;
-
     private final Long _id;
 
-    // Player name
     private final String _name;
 
-    // Player score
     private Integer _score;
 
     // Player shoots
     private Field _field;
-
-    // Check if user can make a shoot
-    private Boolean _canMakeShoot;
 
     // Player ships array that should be hit by opponent
     private ArrayList<Ship> _ships;
@@ -30,14 +23,7 @@ public class Player {
         _name = name;
         _score = 0;
         _field = new Field();
-//        _ships = randomShipsGeneration(
-//                ShipType.CARRIER,
-//                ShipType.BATTLESHIP,
-//                ShipType.CRUISER,
-//                ShipType.SUBMARINE,
-//                ShipType.DESTROYER);
-        // TODO: Replace with random ships generator/user defined ships array
-        _ships = fakeShipsGeneration();
+        _ships = randomShipsGeneration();
     }
 
     public Long getId() { return _id; }
@@ -64,27 +50,17 @@ public class Player {
         _ships = ships;
     }
 
-    public Boolean getCanMakeShoot() {
-        return _canMakeShoot;
-    }
-
-    public void setCanMakeShoot(Boolean canMakeShoot) {
-        _canMakeShoot = canMakeShoot;
-    }
-
-
-
+    // Player win the game
     public void win() {
         _score++;
     }
 
+    // Regenerate player's ships set
     public void recreateShips() {
-        _ships = fakeShipsGeneration();
+        _ships = randomShipsGeneration();
     }
 
-
-
-    // TODO: Fake ship generator (both players will have same ship coordinates)
+    // Method generate the fake ships setup that is used for testing
     private ArrayList<Ship> fakeShipsGeneration() {
         ArrayList<Ship> ships = new ArrayList<>();
 
@@ -123,16 +99,25 @@ public class Player {
         return ships;
     }
 
+    // Generate a set of ships with random positions
     // TODO: Replace method with ability to make initial ships setup by user
-    private ArrayList<Ship> randomShipsGeneration(ShipType... types) {
+    private ArrayList<Ship> randomShipsGeneration() {
+
+        ArrayList<ShipType> types = new ArrayList<ShipType>() {{
+            add(ShipType.CARRIER);
+            add(ShipType.BATTLESHIP);
+            add(ShipType.CRUISER);
+            add(ShipType.SUBMARINE);
+            add(ShipType.DESTROYER);
+        }};
 
         ArrayList<Ship> ships = new ArrayList<>();
 
-        int count = types.length;
+        int count = types.size();
         Random random = new Random();
 
         while (count != 0) {
-            ShipType type = types[count - 1];
+            ShipType type = types.get(count - 1);
             int size = Ship.getSizeByType(type);
 
             boolean isVertical = random.nextBoolean();

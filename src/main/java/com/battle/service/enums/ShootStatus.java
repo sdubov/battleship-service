@@ -4,6 +4,5 @@ public enum ShootStatus {
     MISS,
     HIT,
     KILL,
-    WIN,
-    LOOSE
+    WIN
 }

@@ -5,9 +5,13 @@ import java.util.ArrayList;
 public class Ship {
 
     private ShipType _type;
+
     private int _size;
+
     private ArrayList<Point> _coordinates;
+
     private int _hits;
+
     private boolean _isDead;
 
     public Ship(ShipType type, ArrayList<Point> coordinates) {
@@ -42,7 +46,8 @@ public class Ship {
         _isDead = true;
     }
 
-    public static int getSizeByType(ShipType type) {
+    // Return ship's size by it's type
+    static int getSizeByType(ShipType type) {
         switch (type) {
             case DESTROYER:
                 return 2;
@@ -61,6 +66,7 @@ public class Ship {
         return 0;
     }
 
+    // Count ship's hit to understand when it is killed
     public void hit() {
         _hits++;
     }

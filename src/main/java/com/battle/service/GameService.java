@@ -12,6 +12,10 @@ public class GameService {
 
     private static Game _game;
 
+    public static Game getActiveGame() {
+        return _game;
+    }
+
     // Start the game
     public static GameResponse startGame() {
         _game = new Game();
@@ -21,15 +25,23 @@ public class GameService {
     // Restart after one player win a game
     public static GameResponse restartGame() {
         _game.restart();
-        return new GameResponse(GameStatus.STARTED);
+        GameResponse response = new GameResponse(_game.getGameStatus());
+        response.setActivePlayer(_game.getActivePlayer());
+        return response;
+    }
+
+    // Get game status
+    public static GameResponse getGameStatus() {
+        GameResponse response = new GameResponse(_game.getGameStatus());
+        response.setActivePlayer(_game.getActivePlayer());
+        return response;
     }
 
     // Join an existing game
     public static GameResponse joinGame(String playerName) {
 
         if (_game.getGameStatus() == GameStatus.IN_PROGRESS) {
-            // TODO: All available player are joined.
-            // TODO: throw an exception
+            // TODO: All available players are joined - throw an exception
             return new GameResponse(GameStatus.BOOKED);
         }
 
@@ -47,14 +59,13 @@ public class GameService {
 
         ShootResponse response = new ShootResponse();
 
-        if (_game.getGameStatus() == GameStatus.FINISHED) {
-            // TODO: Replace with broadcasting
-            response.setShootStatus(ShootStatus.LOOSE);
-            return response;
-        }
-
         Player activePlayer = _game.getActivePlayer();
         Player opponent = _game.getOpponent();
+
+        if (_game.getGameStatus() == GameStatus.FINISHED) {
+            response.setGameStatus(GameStatus.FINISHED);
+            return response;
+        }
 
         if (activePlayer.getId() != playerId) {
             response.setGameStatus(GameStatus.WAITING_FOR_SHOOT);
@@ -63,11 +74,10 @@ public class GameService {
 
         // Check if the cell is already processed
         if (activePlayer.getField().getStatus(x, y) != CellStatus.CLOSED) {
-            // TODO: Update to one common status (?)
             return response;
         }
 
-        // Check if player shoot an opponent's ship
+        // Check if player shoot any opponent ship
         ShootStatus status = ShootStatus.MISS;
 
         for (Ship ship : opponent.getShips()) {
@@ -90,7 +100,7 @@ public class GameService {
             if (status == ShootStatus.HIT || status == ShootStatus.KILL) { break; }
         }
 
-        // Check if player hit all opponent's ships and make him a winner
+        // Check if a player kill all opponent's ships and make him a winner
         if (status == ShootStatus.KILL) {
             status = ShootStatus.WIN;
             for (Ship ship : opponent.getShips()) {
@@ -101,23 +111,21 @@ public class GameService {
             }
         }
 
-        // Current player win the game
         if (status == ShootStatus.WIN) {
             activePlayer.win();
-            // TODO: Restart the game only once (replace with broadcasting)
             _game.setGameStatus(GameStatus.FINISHED);
         }
 
-        // Update the cell
+        // Update player's field
         CellStatus cellStatus = (status == ShootStatus.HIT || status == ShootStatus.KILL) ? CellStatus.HIT : CellStatus.MISS;
         activePlayer.getField().setStatus(x, y, cellStatus);
 
-        // Check if we need to switch a player
         if (status == ShootStatus.MISS) {
             _game.switchPlayer();
         }
 
         response.setShootStatus(status);
+        response.setGameStatus(_game.getGameStatus());
         return response;
     }
 }

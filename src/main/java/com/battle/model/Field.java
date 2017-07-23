@@ -5,6 +5,7 @@ import com.battle.service.enums.CellStatus;
 import java.util.ArrayList;
 
 public class Field {
+
     private ArrayList<ArrayList<Cell>> _shoots;
 
     public Field() {
