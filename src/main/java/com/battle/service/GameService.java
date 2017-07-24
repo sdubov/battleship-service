@@ -1,12 +1,12 @@
 package com.battle.service;
 
-import com.battle.model.Game;
-import com.battle.model.Player;
-import com.battle.model.Point;
-import com.battle.model.Ship;
+import com.battle.model.*;
 import com.battle.service.enums.CellStatus;
 import com.battle.service.enums.GameStatus;
 import com.battle.service.enums.ShootStatus;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class GameService {
 
@@ -63,12 +63,10 @@ public class GameService {
         Player opponent = _game.getOpponent();
 
         if (_game.getGameStatus() == GameStatus.FINISHED) {
-            response.setGameStatus(GameStatus.FINISHED);
             return response;
         }
 
         if (activePlayer.getId() != playerId) {
-            response.setGameStatus(GameStatus.WAITING_FOR_SHOOT);
             return response;
         }
 
@@ -92,7 +90,6 @@ public class GameService {
                     }
 
                     response.setShipType(ship.getType());
-                    response.setShipHits(ship.getHits());
 
                     break;
                 }
@@ -125,7 +122,31 @@ public class GameService {
         }
 
         response.setShootStatus(status);
-        response.setGameStatus(_game.getGameStatus());
         return response;
+    }
+
+    // Frame a killed ship with miss cells (ships cannot border each other)
+    private static void frameKilledShip(Ship ship) {
+
+        ArrayList<Point> coordinates = ship.getCoordinates();
+        Collections.sort(coordinates);
+
+        Point min = coordinates.get(0);
+        Point max = coordinates.get(coordinates.size() - 1);
+
+        int minX = min.getX() - 1 < 0 ? 0 : min.getX() - 1;
+        int minY = min.getY() - 1 < 0 ? 0 : min.getY() - 1;
+        int maxX = max.getX() + 1 > 9 ? 9 : max.getX() + 1;
+        int maxY = max.getY() + 1 > 9 ? 9 : max.getY() + 1;
+
+        Field field = _game.getActivePlayer().getField();
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                if (field.getStatus(x, y) != CellStatus.HIT) {
+                    field.setStatus(x, y, CellStatus.MISS);
+                }
+            }
+        }
     }
 }

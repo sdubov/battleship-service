@@ -24,6 +24,7 @@ public class Player {
         _score = 0;
         _field = new Field();
         _ships = randomShipsGeneration();
+        _ships = fakeShipsGeneration();
     }
 
     public Long getId() { return _id; }
@@ -58,6 +59,7 @@ public class Player {
     // Regenerate player's ships set
     public void recreateShips() {
         _ships = randomShipsGeneration();
+        _ships = fakeShipsGeneration();
     }
 
     // Method generate the fake ships setup that is used for testing

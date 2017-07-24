@@ -1,7 +1,10 @@
 package com.battle.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.ArrayList;
 
+@JsonIgnoreProperties(value = { "coordinates" })
 public class Ship {
 
     private ShipType _type;
