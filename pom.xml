@@ -5,7 +5,7 @@
 
     <groupId>com.battle</groupId>
     <artifactId>battleship-service</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.12</version>
 
     <parent>
         <groupId>org.springframework.boot</groupId>

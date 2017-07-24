@@ -1,10 +1,17 @@
 package com.battle.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Point implements Comparable<Point> {
 
+    @JsonProperty(value="x")
     private int _x;
 
+    @JsonProperty(value="y")
     private int _y;
+
+    public Point() {
+    }
 
     public Point(int x, int y) {
         _x = x;

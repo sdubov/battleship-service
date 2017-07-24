@@ -3,6 +3,7 @@ package com.battle.service;
 import com.battle.model.*;
 import com.battle.service.enums.CellStatus;
 import com.battle.service.enums.GameStatus;
+import com.battle.service.enums.PlayerStatus;
 import com.battle.service.enums.ShootStatus;
 
 import java.util.ArrayList;
@@ -16,42 +17,77 @@ public class GameService {
         return _game;
     }
 
+    // Get game status
+    public static GameResponse getGameStatus() {
+        GameStatus status = _game == null ? GameStatus.NONE : _game.getGameStatus();
+        return new GameResponse(status);
+    }
+
     // Start the game
+    // TODO: Handle the case that everybody can interrupt the game by calling the /start method.
     public static GameResponse startGame() {
         _game = new Game();
-        return new GameResponse(GameStatus.STARTED);
+        return new GameResponse(_game.getGameStatus());
     }
 
     // Restart after one player win a game
     public static GameResponse restartGame() {
         _game.restart();
-        GameResponse response = new GameResponse(_game.getGameStatus());
-        response.setActivePlayer(_game.getActivePlayer());
-        return response;
+        return new GameResponse(_game.getGameStatus());
     }
 
-    // Get game status
-    public static GameResponse getGameStatus() {
-        GameResponse response = new GameResponse(_game.getGameStatus());
-        response.setActivePlayer(_game.getActivePlayer());
-        return response;
+    // Close the game
+    public static GameResponse closeGame() {
+        // TODO: Finalize the game before closing
+        // TODO: Store statistic, etc.
+        _game = null;
+        return new GameResponse(GameStatus.NONE);
     }
 
     // Join an existing game
-    public static GameResponse joinGame(String playerName) {
+    public static PlayerResponse joinGame(String playerName) {
 
-        if (_game.getGameStatus() == GameStatus.IN_PROGRESS) {
-            // TODO: All available players are joined - throw an exception
-            return new GameResponse(GameStatus.BOOKED);
+        if (_game == null) {
+            return new PlayerResponse(null, GameStatus.NONE);
+            // TODO: Throw
         }
 
-        Player player = new Player(playerName);
-        _game.addPlayer(player);
+        if (_game.getPlayer1() != null && _game.getPlayer2() != null) {
+            // TODO: throw - All available players are joined
+            return new PlayerResponse(null, GameStatus.BOOKED);
+        }
 
-        GameResponse response = new GameResponse(_game.getGameStatus());
-        response.setActivePlayer(player);
+        Player player = addPlayer(playerName);
 
-        return response;
+        _game.setGameStatus(GameStatus.WAITING_FOR_OPPONENT);
+
+        if (_game.getPlayer2() != null) {
+            _game.setGameStatus(GameStatus.SET_UP);
+        }
+
+        return new PlayerResponse(player, _game.getGameStatus());
+    }
+
+    // Setup ships for player by player ID
+    public static void setupShips(long playerId, ArrayList<Ship> ships) {
+
+        Player player = _game.getPlayerById(playerId);
+        player.setShips(ships);
+        player.setStatus(PlayerStatus.READY);
+
+        Player player1 = _game.getPlayer1();
+        Player player2 = _game.getPlayer2();
+
+        if (player2 == null || player1 == null) {
+            _game.setGameStatus(GameStatus.WAITING_FOR_OPPONENT);
+            return;
+        }
+
+        if (player1.getStatus() == PlayerStatus.READY && player2.getStatus() == PlayerStatus.READY) {
+            _game.setGameStatus(GameStatus.IN_PROGRESS);
+        } else {
+            _game.setGameStatus(GameStatus.SET_UP);
+        }
     }
 
     // Make a shoot
@@ -62,67 +98,89 @@ public class GameService {
         Player activePlayer = _game.getActivePlayer();
         Player opponent = _game.getOpponent();
 
-        if (_game.getGameStatus() == GameStatus.FINISHED) {
+        if (_game.getGameStatus() != GameStatus.IN_PROGRESS) {
+            response.setField(opponent.getField());
+            response.setShipType(ShipType.NONE);
+            response.setShootStatus(ShootStatus.NONE);
             return response;
         }
 
         if (activePlayer.getId() != playerId) {
+            response.setField(opponent.getField());
+            response.setShipType(ShipType.NONE);
+            response.setShootStatus(ShootStatus.WAITING_FOR_OPPONENT);
             return response;
         }
 
         // Check if the cell is already processed
         if (activePlayer.getField().getStatus(x, y) != CellStatus.CLOSED) {
+            response.setField(activePlayer.getField());
+            response.setShipType(ShipType.NONE);
+            response.setShootStatus(ShootStatus.ALREADY_OPENED);
             return response;
         }
 
         // Check if player shoot any opponent ship
         ShootStatus status = ShootStatus.MISS;
+        Ship shipToHit = null;
 
         for (Ship ship : opponent.getShips()) {
             for (Point point : ship.getCoordinates()) {
                 if (point.getX() == x && point.getY() == y) {
                     status = ShootStatus.HIT;
                     ship.hit();
-
-                    if (ship.getHits() == ship.getSize()) {
-                        ship.setIsDead();
-                        status = ShootStatus.KILL;
-                    }
-
                     response.setShipType(ship.getType());
-
+                    shipToHit = ship;
                     break;
                 }
             }
-            if (status == ShootStatus.HIT || status == ShootStatus.KILL) { break; }
+            if (status == ShootStatus.HIT) { break; }
+        }
+
+        // Check if kill the ship
+        if (shipToHit != null && shipToHit.getHits() == shipToHit.getSize()) {
+            shipToHit.setIsDead();
+            frameKilledShip(shipToHit);
         }
 
         // Check if a player kill all opponent's ships and make him a winner
-        if (status == ShootStatus.KILL) {
-            status = ShootStatus.WIN;
+        if (status == ShootStatus.HIT) {
+            boolean isWin = true;
             for (Ship ship : opponent.getShips()) {
                 if (!ship.getIsDead()) {
-                    status = ShootStatus.KILL;
+                    isWin = false;
                     break;
                 }
             }
+
+            if (isWin) {
+                activePlayer.win();
+                _game.setGameStatus(GameStatus.FINISHED);
+            }
         }
 
-        if (status == ShootStatus.WIN) {
-            activePlayer.win();
-            _game.setGameStatus(GameStatus.FINISHED);
-        }
 
         // Update player's field
-        CellStatus cellStatus = (status == ShootStatus.HIT || status == ShootStatus.KILL) ? CellStatus.HIT : CellStatus.MISS;
-        activePlayer.getField().setStatus(x, y, cellStatus);
+        activePlayer.getField().setStatus(x, y, status == ShootStatus.HIT ? CellStatus.HIT : CellStatus.MISS);
 
+        response.setField(activePlayer.getField());
+        response.setShootStatus(status);
+
+        // Switch an active player if miss
         if (status == ShootStatus.MISS) {
             _game.switchPlayer();
         }
 
-        response.setShootStatus(status);
         return response;
+    }
+
+    //region Private Methods and Operators
+
+    private static Player addPlayer(String name) {
+        Player player = PlayerService.createPlayer(name);
+        _game.addPlayer(player);
+
+        return player;
     }
 
     // Frame a killed ship with miss cells (ships cannot border each other)
@@ -149,4 +207,6 @@ public class GameService {
             }
         }
     }
+
+    //endregion Private Methods and Operators
 }

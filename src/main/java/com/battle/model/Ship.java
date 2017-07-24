@@ -1,21 +1,30 @@
 package com.battle.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 
-@JsonIgnoreProperties(value = { "coordinates" })
+//@JsonIgnoreProperties(value = { "coordinates" })
 public class Ship {
 
+    @JsonProperty(value="type")
     private ShipType _type;
 
+    @JsonProperty(value="size")
     private int _size;
 
+    @JsonProperty(value="coordinates",
+                  access = JsonProperty.Access.WRITE_ONLY)
     private ArrayList<Point> _coordinates;
 
+    @JsonProperty(value="hits")
     private int _hits;
 
+    @JsonProperty(value="isDead")
     private boolean _isDead;
+
+    public Ship() {
+    }
 
     public Ship(ShipType type, ArrayList<Point> coordinates) {
         _type = type;

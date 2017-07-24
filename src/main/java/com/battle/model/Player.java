@@ -1,5 +1,7 @@
 package com.battle.model;
 
+import com.battle.service.enums.PlayerStatus;
+
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.UUID;
@@ -12,18 +14,22 @@ public class Player {
 
     private Integer _score;
 
-    // Player shoots
     private Field _field;
 
-    // Player ships array that should be hit by opponent
     private ArrayList<Ship> _ships;
 
+    private PlayerStatus _status;
+
+    private Boolean _isActive;
+
     public Player(String name) {
-        _id = UUID.randomUUID().getLeastSignificantBits() / 1000;
+        _id = UUID.randomUUID().getLeastSignificantBits() / 10000;
         _name = name;
         _score = 0;
         _field = new Field();
         _ships = randomShipsGeneration();
+        _status = PlayerStatus.NONE;
+        _isActive = false;
     }
 
     public Long getId() { return _id; }
@@ -50,12 +56,29 @@ public class Player {
         _ships = ships;
     }
 
+    public PlayerStatus getStatus() {
+        return _status;
+    }
+
+    public void setStatus(PlayerStatus status) {
+        _status = status;
+    }
+
+    public Boolean getIsActive() {
+        return _isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        _isActive = isActive;
+    }
+
     // Player win the game
     public void win() {
         _score++;
     }
 
     // Regenerate player's ships set
+    // TODO: Reset to empty array
     public void recreateShips() {
         _ships = randomShipsGeneration();
     }
